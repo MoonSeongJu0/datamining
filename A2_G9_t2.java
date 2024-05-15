@@ -159,7 +159,7 @@ public class A2_G9_t2 {
         for (String core_point : data.keySet()) {
             if (point_labels.get(core_point).equals("core_point")) {
                 cluster_count++;
-                List<String> cluster_members = density_connect(data, point_labels, core_point, epsilon);
+                List<String> cluster_members = EXPANDCLUSTER(data, point_labels, core_point, epsilon);
                 clusters.put(cluster_count, cluster_members);
             }
         }
@@ -171,7 +171,7 @@ public class A2_G9_t2 {
         return clusters;
     }
 
-    private static List<String> density_connect(HashMap<String, List<Double>> data, Map<String, String> point_labels, String core_point, Double epsilon) {
+    private static List<String> EXPANDCLUSTER(HashMap<String, List<Double>> data, Map<String, String> point_labels, String core_point, Double epsilon) {
         List<String> cluster_members = new ArrayList<>();
         Queue<String> q = new LinkedList<>();
         q.add(core_point);
