@@ -2,14 +2,15 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.Queue;
 import java.util.HashMap;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 
 
@@ -65,9 +66,8 @@ public class A2_G9_t2 {
         }
         
         //print DBSCAN cluster
-        Map<Integer, List<String>> clusters = DBSCAN(data, epsilon, mu);
+        Map<String, Integer> clusters = DBSCAN(data, epsilon, mu);
         printclusters(clusters);
-
     }
     
     private static HashMap<String, List<Double>> read_csv(String filePath){
@@ -80,7 +80,7 @@ public class A2_G9_t2 {
                 String[] lines = line.split(",");
                 String point = lines[0];
                 List<Double> values = new ArrayList<Double>();
-                for (int i = 1 ; i<lines.length; i++){
+                for (int i=1 ; i<3; i++){
                     values.add(Double.parseDouble(lines[i]));
                 }
                 data.put(point, values);
@@ -94,105 +94,104 @@ public class A2_G9_t2 {
 
     private static Double distance (List<Double> point1, List<Double> point2) {
         Double sum = 0.0;
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < point1.size(); i++) {
             sum += Math.pow(point1.get(i) - point2.get(i), 2);
         }
         return Math.sqrt(sum);
     }
 
-    private static void printclusters(Map<Integer, List<String>> clusters) {
-        for (Map.Entry<Integer, List<String>> entry : clusters.entrySet()) {
-            System.out.print("Cluster #" + entry.getKey() + " => ");
-            List<String> cluster_members = entry.getValue();
-            Collections.sort(cluster_members);
-            for (int i = 0; i < cluster_members.size(); i++) {
-                System.out.print(cluster_members.get(i));
-                if (i < cluster_members.size() - 1) {
-                    System.out.print(" ");
+    private static Map<String, Integer> DBSCAN(HashMap<String, List<Double>> data, Double epsilon, int mu){
+        Map<String, Integer> ClusterID = new HashMap<>();
+        Integer Cluster_ID = 1;
+        for (String point : data.keySet()) {
+            if (ClusterID.get(point) == null){
+                if (ExpandCluster(data, point, ClusterID, epsilon, mu, Cluster_ID)){
+                    Cluster_ID++;
                 }
+            }
+        }
+        return ClusterID;
+    }
+
+    private static boolean ExpandCluster(HashMap<String, List<Double>> data, String point, Map<String, Integer> ClusterID, Double epsilon, int mu, int Cluster_ID) {
+        Queue<String> seeds = new LinkedList<>();
+        for (String q : data.keySet()) {
+            if (distance(data.get(point), data.get(q)) <= epsilon) {
+                seeds.add(q);
+            }
+        }
+        if (seeds.size() < mu ){
+            ClusterID.put(point, 0);
+            return false;
+        }
+        else{
+            while (!seeds.isEmpty()) {
+                String currentP = seeds.poll();
+                ClusterID.put(currentP, Cluster_ID);
+                Queue<String> result = new LinkedList<>();
+                for (String q : data.keySet()) {
+                    if (distance(data.get(currentP), data.get(q)) <= epsilon) {
+                        result.add(q);
+                    }
+                }
+                if (result.size() >= mu){
+                    while (!result.isEmpty()) {
+                        String resultP = result.poll();
+                        if (ClusterID.get(resultP) == null || ClusterID.get(resultP).equals(0)){
+                            if (ClusterID.get(resultP) == null){
+                                seeds.add(resultP);
+                            }
+                            ClusterID.put(resultP, Cluster_ID);
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
+    private static void printclusters(Map<String, Integer> clusters) {
+        TreeMap<Integer, List<String>> clusterMap = new TreeMap<>();
+        int noise_count = 0;
+    
+        // Group points by cluster ID
+        for (Map.Entry<String, Integer> entry : clusters.entrySet()) {
+            String point = entry.getKey();
+            int clusterID = entry.getValue();
+            if (clusterID == 0){
+                noise_count++;
+            }
+            else {
+                clusterMap.putIfAbsent(clusterID, new ArrayList<>());
+                clusterMap.get(clusterID).add(point);
+            }
+        }
+    
+        System.out.println("Number of noise: " + noise_count);
+        System.out.println("Number of clusters: " + (clusterMap.size()));
+    
+        for (Map.Entry<Integer, List<String>> entry : clusterMap.entrySet()) {
+            int clusterID = entry.getKey();
+            List<String> points = entry.getValue();
+            
+            // Sort points within cluster
+            for (int i = 0; i < points.size() - 1; i++) {
+                for (int j = i + 1; j < points.size(); j++) {
+                    int p1 = Integer.parseInt(points.get(i).substring(1));
+                    int p2 = Integer.parseInt(points.get(j).substring(1));
+                    if (p1 > p2) {
+                        String temp = points.get(i);
+                        points.set(i, points.get(j));
+                        points.set(j, temp);
+                    }
+                }
+            }
+    
+            System.out.print("Cluster #" + clusterID + " => ");
+            for (String point : points) {
+                System.out.print(point + " ");
             }
             System.out.println();
         }
-    }
-
-    private static Map<Integer, List<String>> DBSCAN(HashMap<String, List<Double>> data, Double epsilon, int mu){
-    Map<Integer, List<String>> clusters = new HashMap<>();
-
-    Map<String, String> point_labels = new HashMap<>();
-    int cluster_count = 0;
-    int noise_count = 0;
-        //count the number of neighbor
-        for (String point : data.keySet()) {
-            int neighbor_count = 0;
-            for (String neighbor : data.keySet()) {
-                if (distance(data.get(point), data.get(neighbor)) <= epsilon) {
-                    neighbor_count++;
-                }
-            }
-            //if the number of neighbor of the point is equal or larger than mu, then the point is core point.
-            if (neighbor_count >= mu) {
-                point_labels.put (point, "core_point");
-                // if the point s.t. neighbor of a point is border point.
-                for (String neighbor : data.keySet()) {
-                    if (distance(data.get(point), data.get(neighbor)) <= epsilon ){
-                        if (!point_labels.containsKey(neighbor)){
-                            point_labels.put(neighbor, "border_point");
-                        }
-                        else if(point_labels.get(neighbor).equals("noise_point")) {
-                            point_labels.put(neighbor, "border_point");
-                            noise_count--;
-                        }
-                    }
-                }
-            } 
-            //if the number of neighbor of the point is smaller than mu, and if the point is not border point, then the point is noise point.
-            else {
-                if (!point_labels.containsKey(point)){
-                    point_labels.put(point, "noise_point");
-                    noise_count++;
-                }
-            }
-        }
-        //maked point_labels
-
-        //make clusters
-        for (String core_point : data.keySet()) {
-            if (point_labels.get(core_point).equals("core_point")) {
-                cluster_count++;
-                List<String> cluster_members = EXPANDCLUSTER(data, point_labels, core_point, epsilon);
-                clusters.put(cluster_count, cluster_members);
-            }
-        }
-
-
-        System.out.println("Number of clusters: " + cluster_count);
-        System.out.println("Number of noise : " + noise_count);
-
-        return clusters;
-    }
-
-    private static List<String> EXPANDCLUSTER(HashMap<String, List<Double>> data, Map<String, String> point_labels, String core_point, Double epsilon) {
-        List<String> cluster_members = new ArrayList<>();
-        Queue<String> q = new LinkedList<>();
-        q.add(core_point);
-
-        while (!q.isEmpty()) {
-            String point = q.poll();
-            for (String neighbor : data.keySet()) {
-                if (distance(data.get(point), data.get(neighbor)) <= epsilon){
-                    if ((point_labels.get(neighbor).equals("core_point"))){
-                        q.add(neighbor);
-                        cluster_members.add(neighbor);
-                        point_labels.put(neighbor, "visited");
-                    }
-                    else if ((point_labels.get(neighbor).equals("border_point"))){
-                        cluster_members.add(neighbor);
-                        point_labels.put(neighbor, "visited");
-                    }
-                }
-            }
-        }
-        
-        return cluster_members;
     }
 }
