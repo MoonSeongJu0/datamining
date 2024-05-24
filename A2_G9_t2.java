@@ -101,19 +101,19 @@ public class A2_G9_t2 {
     }
 
     private static Map<String, Integer> DBSCAN(HashMap<String, List<Double>> data, Double epsilon, int mu){
-        Map<String, Integer> ClusterID = new HashMap<>();
-        Integer Cluster_ID = 1;
+        Map<String, Integer> ClusterList = new HashMap<>();
+        Integer ClusterID = 1;
         for (String point : data.keySet()) {
-            if (ClusterID.get(point) == null){
-                if (ExpandCluster(data, point, ClusterID, epsilon, mu, Cluster_ID)){
-                    Cluster_ID++;
+            if (ClusterList.get(point) == null){
+                if (ExpandCluster(data, point, ClusterList, epsilon, mu, ClusterID)){
+                    ClusterID++;
                 }
             }
         }
-        return ClusterID;
+        return ClusterList;
     }
 
-    private static boolean ExpandCluster(HashMap<String, List<Double>> data, String point, Map<String, Integer> ClusterID, Double epsilon, int mu, int Cluster_ID) {
+    private static boolean ExpandCluster(HashMap<String, List<Double>> data, String point, Map<String, Integer> ClusterList, Double epsilon, int mu, int ClusterID) {
         Queue<String> seeds = new LinkedList<>();
         for (String q : data.keySet()) {
             if (distance(data.get(point), data.get(q)) <= epsilon) {
@@ -121,13 +121,13 @@ public class A2_G9_t2 {
             }
         }
         if (seeds.size() < mu ){
-            ClusterID.put(point, 0);
+            ClusterList.put(point, 0);
             return false;
         }
         else{
             while (!seeds.isEmpty()) {
                 String currentP = seeds.poll();
-                ClusterID.put(currentP, Cluster_ID);
+                ClusterList.put(currentP, ClusterID);
                 Queue<String> result = new LinkedList<>();
                 for (String q : data.keySet()) {
                     if (distance(data.get(currentP), data.get(q)) <= epsilon) {
@@ -137,11 +137,11 @@ public class A2_G9_t2 {
                 if (result.size() >= mu){
                     while (!result.isEmpty()) {
                         String resultP = result.poll();
-                        if (ClusterID.get(resultP) == null || ClusterID.get(resultP).equals(0)){
-                            if (ClusterID.get(resultP) == null){
+                        if (ClusterList.get(resultP) == null || ClusterList.get(resultP).equals(0)){
+                            if (ClusterList.get(resultP) == null){
                                 seeds.add(resultP);
                             }
-                            ClusterID.put(resultP, Cluster_ID);
+                            ClusterList.put(resultP, ClusterID);
                         }
                     }
                 }
