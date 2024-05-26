@@ -20,8 +20,9 @@ public class A2_G9_t2 {
         HashMap<String, List<Double>> data = read_csv(args[0]);
 
         //input eps and minpts
-        Integer mu = 4;
-        Double epsilon = 0.5;
+        Integer dim = data.values().iterator().next().size();
+        Integer mu = 2 * dim;
+        Double epsilon = 0.0;
 
         if (args.length >= 2) {
             boolean isInteger = false;
@@ -30,18 +31,20 @@ public class A2_G9_t2 {
                 mu = Integer.parseInt(args[1]);
                 isInteger = true;
                 if (args.length == 2){
-                    System.out.println("Estimated eps : 0.5");
+                    epsilon = Estimated_epsilon(data, mu);
+                    System.out.println("Estimated eps : " + epsilon);
                 }
             } catch (NumberFormatException e) {
                 try {
                     epsilon = Double.parseDouble(args[1]);
                     isDouble = true;
                     if (args.length == 2){
-                        System.out.println("Estimated eps : 4");
+                        System.out.println("Estimated MinPts : " + mu);
                     }
                 } catch (NumberFormatException ex) {
-                    System.out.println("Estimated MinPts : 4");
-                    System.out.println("Estimated eps : 0.5");
+                    System.out.println("Estimated MinPts : " + mu);
+                    epsilon = Estimated_epsilon(data, mu);
+                    System.out.println("Estimated eps : " + epsilon);
                 }
             }
             if (args.length >= 3) {
@@ -49,27 +52,66 @@ public class A2_G9_t2 {
                     try {
                         mu = Integer.parseInt(args[2]);
                     } catch (NumberFormatException e) {
-                        System.out.println("Estimated MinPts : 4");
+                        System.out.println("Estimated MinPts : " + mu);
                     }
                 }
                 else if (isInteger && !isDouble) {
                     try {
                         epsilon = Double.parseDouble(args[2]);
                     } catch (NumberFormatException e) {
-                        System.out.println("Estimated eps : 0.5");
+                        epsilon = Estimated_epsilon(data, mu);
+                        System.out.println("Estimated eps : " + epsilon);
                     }
                 }
             }
         } else {
-            System.out.println("Estimated MinPts : 4");
-            System.out.println("Estimated eps : 0.5");
+            System.out.println("Estimated MinPts : " + mu);
+            epsilon = Estimated_epsilon(data, mu);
+            System.out.println("Estimated eps : " + epsilon);
         }
         
         //print DBSCAN cluster
         Map<String, Integer> clusters = DBSCAN(data, epsilon, mu);
         printclusters(clusters);
     }
-    
+
+    private static Double Estimated_epsilon (HashMap<String, List<Double>> data, Integer mu){
+        List<Double> k_distances = new ArrayList<>();
+        for (String point : data.keySet()) {
+            List<Double> distances = new ArrayList<>();
+            for (String otherPoint : data.keySet()) {
+                if (!point.equals(otherPoint)) {
+                    distances.add(distance(data.get(point), data.get(otherPoint)));
+                }
+            }
+            Collections.sort(distances);
+            k_distances.add(distances.get(mu - 1));
+        }
+        Collections.sort(k_distances, Collections.reverseOrder());
+        Double estimated_eps = find_optimal_eps(k_distances);
+        return estimated_eps;
+    }
+
+    private static Double find_optimal_eps(List<Double> k_distances) {
+        int data_size = k_distances.size();
+        double[] secondDerivatives = new double[data_size];
+        for (int i = 1; i < data_size - 1; i++) {
+            double secondDerivative = k_distances.get(i - 1) - 2 * k_distances.get(i) + k_distances.get(i + 1);
+            secondDerivatives[i] = secondDerivative;
+        }
+
+        int kneePoint = 1;
+        double maxSecondDerivative = secondDerivatives[1];
+        for (int i = 2; i < data_size - 1; i++) {
+            if (secondDerivatives[i] > maxSecondDerivative) {
+                maxSecondDerivative = secondDerivatives[i];
+                kneePoint = i;
+            }
+        }
+    return k_distances.get(kneePoint);
+    }
+
+
     private static HashMap<String, List<Double>> read_csv(String filePath){
         HashMap<String, List<Double>> data =  new HashMap<String, List<Double>>();
         try {
@@ -167,9 +209,8 @@ public class A2_G9_t2 {
             }
         }
     
-        System.out.println("Number of clusters: " + (clusterMap.size()));
         System.out.println("Number of noise: " + noise_count);
-        
+        System.out.println("Number of clusters: " + (clusterMap.size()));
     
         for (Map.Entry<Integer, List<String>> entry : clusterMap.entrySet()) {
             int clusterID = entry.getKey();
