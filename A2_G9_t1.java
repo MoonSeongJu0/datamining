@@ -30,7 +30,7 @@ public class A2_G9_t1 {
         if (args.length == 1) {
             int estimated_k_elbow = findEstimatedK_avg(data, 2, 80, 10);
             System.out.println("estimated k: " + estimated_k_elbow);
-            k_value = estimated_k_elbow; // or you can choose estimated_k_silhouette based on preference
+            k_value = estimated_k_elbow;
         }
         List<List<Double>> centroids = centroid_selection(data, k_value);
         Map<Integer, List<String>> clusters = kmeans_pp(data, centroids);
