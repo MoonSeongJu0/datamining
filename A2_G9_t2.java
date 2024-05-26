@@ -167,8 +167,9 @@ public class A2_G9_t2 {
             }
         }
     
-        System.out.println("Number of noise: " + noise_count);
         System.out.println("Number of clusters: " + (clusterMap.size()));
+        System.out.println("Number of noise: " + noise_count);
+        
     
         for (Map.Entry<Integer, List<String>> entry : clusterMap.entrySet()) {
             int clusterID = entry.getKey();
