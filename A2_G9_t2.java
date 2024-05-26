@@ -110,7 +110,7 @@ public class A2_G9_t2 {
                 }
             }
         }
-        return ClusterList;
+        return ClusterMap;
     }
 
     private static boolean ExpandCluster(HashMap<String, List<Double>> data, String point, Map<String, Integer> ClusterMap, Double epsilon, int mu, int ClusterID) {
