@@ -94,21 +94,21 @@ public class A2_G9_t2 {
 
     private static Double find_optimal_eps(List<Double> k_distances) {
         int data_size = k_distances.size();
-        double[] secondDerivatives = new double[data_size];
-        for (int i = 1; i < data_size - 1; i++) {
-            double secondDerivative = k_distances.get(i - 1) - 2 * k_distances.get(i) + k_distances.get(i + 1);
-            secondDerivatives[i] = secondDerivative;
+        if (data_size <= 2){
+            return k_distances.get(0);
         }
 
-        int kneePoint = 1;
-        double maxSecondDerivative = secondDerivatives[1];
-        for (int i = 2; i < data_size - 1; i++) {
-            if (secondDerivatives[i] > maxSecondDerivative) {
-                maxSecondDerivative = secondDerivatives[i];
-                kneePoint = i;
+        double maxSecondDerivative = Double.MIN_VALUE;
+        double optimalEps = 0.0;
+
+        for (int i = 1; i < data_size - 1; i++) {
+            double secondDerivative = k_distances.get(i - 1) - 2 * k_distances.get(i) + k_distances.get(i + 1);
+            if (secondDerivative > maxSecondDerivative) {
+                maxSecondDerivative = secondDerivative;
+                optimalEps = k_distances.get(i);
             }
         }
-    return k_distances.get(kneePoint);
+    return optimalEps;
     }
 
 
