@@ -211,8 +211,10 @@ public class A2_G9_t2 {
     
         System.out.println("Number of noise: " + noise_count);
         System.out.println("Number of clusters: " + (clusterMap.size()));
-    
+        
+        int c = 0;
         for (Map.Entry<Integer, List<String>> entry : clusterMap.entrySet()) {
+            c++;
             int clusterID = entry.getKey();
             List<String> points = entry.getValue();
             
@@ -230,10 +232,15 @@ public class A2_G9_t2 {
             }
     
             System.out.print("Cluster #" + clusterID + " => ");
-            for (String point : points) {
-                System.out.print(point + " ");
+            for (int i = 0; i < points.size(); i++) {
+                System.out.print(points.get(i));
+                if (i < points.size() - 1) {
+                    System.out.print(" ");
+                }
             }
-            System.out.println();
+            if (c != clusterMap.size()){
+                System.out.println();
+            }
         }
     }
 }
